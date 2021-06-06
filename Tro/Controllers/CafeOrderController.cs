@@ -23,26 +23,28 @@ namespace Tro.Controllers
             _drinkRepo = drinkRepo;
         }
 
-        [HttpGet]
-        public ActionResult<List<Drink>> GetDrinks()
-        {
-            return _drinkRepo.GetDrinks();
-        }
-
 
         [HttpPost]
         [Route("/Sale")]
         public ActionResult<string> CreateReceipt(List<Drink> drinks)
         {
 
-
-
-            CafeOrder purchased = new CafeOrder();
-            if (drinks != null)
+            if (drinks != null )
             {
-                double subtotal = drinks.Sum(x => x.Price);
-                double total = GetTotal(drinks, subtotal);
-                return $"total cost {subtotal:c} after discount {total:c}";
+                var drinkMenu = _drinkRepo.GetDrinks();
+                var purchased = new CafeOrder();
+                foreach (var (menuItem, item) in drinkMenu.SelectMany(menuItem => drinks.Select(item => (menuItem, item))))
+                {
+                    if (menuItem.Name.ToLower() == item.Name.ToLower())
+                    {
+                        double subtotal = drinks.Sum(x => x.Price);
+                        double total = GetTotal(drinks, subtotal);
+                        return $"total cost {subtotal:c} after discount {total:c}";
+                    }
+                    else
+                        return $"An item not in the menu was added.";
+
+                }
             }
 
             return $"No drinks entered";
@@ -50,30 +52,27 @@ namespace Tro.Controllers
         }
 
 
+
+
+
         private static double GetTotal(List<Drink> drinks, double subtotal)
         {
-            if (drinks.Count() > 3 && drinks.Count() < 6)
+            if (drinks.Count() is > 3 and < 6)
             {
-                subtotal = subtotal - (subtotal * 0.1);
+                subtotal -= (subtotal * 0.1);
             }
-            if (drinks.Count() > 6 && drinks.Count() < 10)
+            if (drinks.Count() is > 6 and < 10)
             {
-                subtotal = subtotal - (subtotal * 0.2);
+                subtotal -= (subtotal * 0.2);
             }
             if (drinks.Count > 10)
             {
-                subtotal = subtotal - (subtotal * 0.1);
-                subtotal = subtotal - (subtotal * 0.2);
+                subtotal -= (subtotal * 0.1);
+                subtotal -= (subtotal * 0.2);
             }
 
             return subtotal;
         }
     }
-
-
-
-
-
-
 }
-}
+
